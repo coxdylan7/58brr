@@ -1,0 +1,34 @@
+{
+    "coolbot": {
+        "target_temp": 30,
+        "hysteresis": 2,
+        "coil_freeze_threshold": 33,
+        "coil_resume_threshold": 36,
+        "min_off_time_minutes": 8,
+        "max_runtime_hours": 4,
+        "enable_heating_pad": true,
+        "enable_ir_control": false,
+        "safety_mode_enabled": true
+    },
+    "entities": {
+        "ac_smart_plug": "switch.ac_plug",
+        "heating_pad_plug": "switch.heating_pad",
+        "room_temp_sensor": "sensor.room_temp", 
+        "coil_temp_sensor": "sensor.coil_temp",
+        "ir_blaster": "remote.ac_ir_blaster"
+    },
+    "ir_commands": {
+        "cool_mode": {
+            "service": "remote.send_command",
+            "data": {
+                "entity_id": "remote.ac_ir_blaster",
+                "command": "cool_60_high"
+            }
+        }
+    },
+    "alerts": {
+        "sensor_offline_minutes": 10,
+        "coil_freeze_alert": true,
+        "long_runtime_alert": true
+    }
+}
