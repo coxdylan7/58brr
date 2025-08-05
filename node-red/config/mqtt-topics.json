@@ -1,0 +1,91 @@
+{
+    "mqtt_broker": {
+        "host": "localhost",
+        "port": 1883,
+        "username": "",
+        "password": "",
+        "client_id": "coolbot_nodered"
+    },
+    "topics": {
+        "sensors": {
+            "room_temperature": "coolbot/sensors/room_temp",
+            "coil_temperature": "coolbot/sensors/coil_temp",
+            "esp32_status": "coolbot/esp32/status",
+            "esp32_heartbeat": "coolbot/esp32/heartbeat"
+        },
+        "controls": {
+            "ac_plug": "coolbot/controls/ac_plug",
+            "heating_pad": "coolbot/controls/heating_pad",
+            "ir_command": "coolbot/controls/ir_send"
+        },
+        "status": {
+            "system_status": "coolbot/status/system",
+            "ac_status": "coolbot/status/ac",
+            "freeze_protection": "coolbot/status/freeze_protection",
+            "alerts": "coolbot/status/alerts"
+        },
+        "settings": {
+            "target_temp": "coolbot/settings/target_temp",
+            "hysteresis": "coolbot/settings/hysteresis",
+            "enable_heating_pad": "coolbot/settings/heating_pad_enabled",
+            "enable_ir": "coolbot/settings/ir_enabled"
+        }
+    },
+    "message_formats": {
+        "temperature_sensor": {
+            "topic": "coolbot/sensors/{sensor_type}",
+            "payload": {
+                "temperature": "float",
+                "humidity": "float (optional)",
+                "timestamp": "unix_timestamp",
+                "sensor_id": "string"
+            }
+        },
+        "esp32_status": {
+            "topic": "coolbot/esp32/status",
+            "payload": {
+                "online": "boolean",
+                "uptime": "seconds",
+                "wifi_rssi": "dBm",
+                "free_heap": "bytes",
+                "sensors_online": "array of sensor_ids"
+            }
+        },
+        "control_command": {
+            "topic": "coolbot/controls/{device}",
+            "payload": {
+                "command": "on|off",
+                "source": "nodered|manual|emergency",
+                "timestamp": "unix_timestamp"
+            }
+        },
+        "ir_command": {
+            "topic": "coolbot/controls/ir_send",
+            "payload": {
+                "command": "string (IR code or command name)",
+                "repeat": "number (default 1)",
+                "protocol": "string (optional)"
+            }
+        }
+    },
+    "esp32_configuration": {
+        "sensor_pins": {
+            "room_temp_pin": "GPIO4",
+            "coil_temp_pin": "GPIO5",
+            "status_led": "GPIO2"
+        },
+        "relay_pins": {
+            "ac_plug_relay": "GPIO12",
+            "heating_pad_relay": "GPIO13"
+        },
+        "ir_pins": {
+            "ir_send": "GPIO14",
+            "ir_receive": "GPIO15"
+        },
+        "update_intervals": {
+            "temperature_reading": "30s",
+            "status_heartbeat": "60s",
+            "wifi_check": "300s"
+        }
+    }
+}
