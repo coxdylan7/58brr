@@ -1,0 +1,28 @@
+# Core dependencies for AC automation system
+pydantic>=2.0.0
+pyyaml>=6.0
+schedule>=1.2.0
+requests>=2.31.0
+
+# Sensor and hardware interfaces
+RPi.GPIO>=0.7.1; platform_machine=="armv7l" or platform_machine=="aarch64"
+adafruit-circuitpython-dht>=3.7.0; platform_machine=="armv7l" or platform_machine=="aarch64"
+w1thermsensor>=2.0.0; platform_machine=="armv7l" or platform_machine=="aarch64"
+
+# Data handling and storage
+sqlite3-db>=0.1.0
+pandas>=2.0.0
+
+# Logging and monitoring
+structlog>=23.0.0
+prometheus-client>=0.17.0
+
+# Web interface (optional)
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# Development dependencies
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.5.0
