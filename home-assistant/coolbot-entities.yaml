@@ -1,0 +1,181 @@
+# CoolBot Home Assistant Entity Configuration
+# Add these entities to your Home Assistant configuration
+
+# Example sensor configurations for temperature monitoring
+sensor:
+  # Room temperature sensor (example using ESP32/ESPHome)
+  - platform: mqtt
+    name: "Room Temperature"
+    unique_id: "coolbot_room_temp"
+    device_class: temperature
+    unit_of_measurement: "°F"
+    state_topic: "coolbot/sensors/room_temp"
+    value_template: "{{ value_json.temperature }}"
+    
+  # Coil temperature sensor (critical for freeze protection)
+  - platform: mqtt
+    name: "Coil Temperature"
+    unique_id: "coolbot_coil_temp"
+    device_class: temperature
+    unit_of_measurement: "°F"
+    state_topic: "coolbot/sensors/coil_temp"
+    value_template: "{{ value_json.temperature }}"
+
+# Switch entities for smart plugs
+switch:
+  # AC unit smart plug
+  - platform: tplink
+    name: "AC Plug"
+    host: 192.168.1.100  # Replace with your smart plug IP
+    
+  # Heating pad smart plug (optional)
+  - platform: tplink
+    name: "Heating Pad"
+    host: 192.168.1.101  # Replace with your smart plug IP
+
+# IR blaster for AC control (optional)
+remote:
+  - platform: broadlink
+    name: "AC IR Blaster"
+    host: 192.168.1.102  # Replace with your Broadlink device IP
+    mac: "AA:BB:CC:DD:EE:FF"  # Replace with your device MAC
+    timeout: 15
+    
+# Template sensors for monitoring
+template:
+  - sensor:
+      - name: "CoolBot Status"
+        unique_id: "coolbot_system_status"
+        state: >
+          {% if states('sensor.room_temp') == 'unavailable' or states('sensor.coil_temp') == 'unavailable' %}
+            Sensor Error
+          {% elif states('switch.ac_plug') == 'on' %}
+            Cooling
+          {% else %}
+            Standby
+          {% endif %}
+        icon: >
+          {% if states('switch.ac_plug') == 'on' %}
+            mdi:air-conditioner
+          {% else %}
+            mdi:thermometer
+          {% endif %}
+          
+      - name: "Temperature Differential"
+        unique_id: "coolbot_temp_diff"
+        unit_of_measurement: "°F"
+        state: >
+          {% set room = states('sensor.room_temp') | float(0) %}
+          {% set target = 30 %}
+          {{ (room - target) | round(1) }}
+        
+      - name: "Coil Freeze Risk"
+        unique_id: "coolbot_freeze_risk"
+        state: >
+          {% set coil_temp = states('sensor.coil_temp') | float(50) %}
+          {% if coil_temp < 33 %}
+            High
+          {% elif coil_temp < 36 %}
+            Medium
+          {% else %}
+            Low
+          {% endif %}
+        icon: >
+          {% set coil_temp = states('sensor.coil_temp') | float(50) %}
+          {% if coil_temp < 33 %}
+            mdi:snowflake-alert
+          {% elif coil_temp < 36 %}
+            mdi:snowflake
+          {% else %}
+            mdi:thermometer-check
+          {% endif %}
+
+# Binary sensors for alerts
+binary_sensor:
+  - platform: template
+    sensors:
+      coolbot_freeze_protection:
+        friendly_name: "Freeze Protection Active"
+        value_template: >
+          {{ states('sensor.coil_temp') | float(50) < 33 }}
+        icon_template: >
+          {% if is_state('binary_sensor.coolbot_freeze_protection', 'on') %}
+            mdi:snowflake-alert
+          {% else %}
+            mdi:snowflake-off
+          {% endif %}
+            
+      coolbot_sensors_online:
+        friendly_name: "All Sensors Online"
+        value_template: >
+          {{ states('sensor.room_temp') != 'unavailable' and 
+             states('sensor.coil_temp') != 'unavailable' }}
+        icon_template: >
+          {% if is_state('binary_sensor.coolbot_sensors_online', 'on') %}
+            mdi:check-network
+          {% else %}
+            mdi:network-off
+          {% endif %}
+
+# Input numbers for dashboard controls (if not using Node-RED dashboard)
+input_number:
+  coolbot_target_temp:
+    name: "Target Temperature"
+    min: 25
+    max: 45
+    step: 1
+    unit_of_measurement: "°F"
+    icon: mdi:thermometer
+    
+  coolbot_hysteresis:
+    name: "Temperature Hysteresis"
+    min: 1
+    max: 5
+    step: 0.5
+    unit_of_measurement: "°F"
+    icon: mdi:thermometer-lines
+
+# Input booleans for settings
+input_boolean:
+  coolbot_enable_heating_pad:
+    name: "Enable Heating Pad"
+    icon: mdi:heating-coil
+    
+  coolbot_enable_ir_control:
+    name: "Enable IR Control"
+    icon: mdi:remote
+    
+  coolbot_emergency_mode:
+    name: "Emergency Mode"
+    icon: mdi:alert
+
+# Automation examples (backup to Node-RED)
+automation:
+  - alias: "CoolBot Emergency Freeze Protection"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.coil_temp
+        below: 30
+    action:
+      - service: switch.turn_off
+        entity_id: switch.ac_plug
+      - service: notify.persistent_notification
+        data:
+          title: "CoolBot Emergency"
+          message: "AC shut off due to dangerously low coil temperature ({{ states('sensor.coil_temp') }}°F)"
+          
+  - alias: "CoolBot Sensor Offline Alert"
+    trigger:
+      - platform: state
+        entity_id: 
+          - sensor.room_temp
+          - sensor.coil_temp
+        to: 'unavailable'
+        for: '00:05:00'
+    action:
+      - service: switch.turn_off
+        entity_id: switch.ac_plug
+      - service: notify.persistent_notification
+        data:
+          title: "CoolBot Sensor Alert"
+          message: "{{ trigger.entity_id }} has been offline for 5 minutes. AC disabled for safety."

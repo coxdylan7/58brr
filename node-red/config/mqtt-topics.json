@@ -1,0 +1,119 @@
+{
+    "mqtt_broker": {
+        "host": "localhost",
+        "port": 1883,
+        "username": "",
+        "password": "",
+        "client_id": "coolbot_nodered"
+    },
+    "topics": {
+        "sensors": {
+            "room_temperature": "coolbot/sensors/room_temp",
+            "coil_temperature": "coolbot/sensors/coil_temp",
+            "esp32_status": "coolbot/esp32/status",
+            "esp32_heartbeat": "coolbot/esp32/heartbeat"
+        },
+        "controls": {
+            "ac_plug": "coolbot/controls/ac_plug",
+            "heating_diode": "coolbot/controls/heating_diode",
+            "ir_command": "coolbot/controls/ir_send"
+        },
+        "status": {
+            "system_status": "coolbot/status/system",
+            "ac_status": "coolbot/status/ac",
+            "heating_diode_status": "coolbot/status/heating_diode",
+            "freeze_protection": "coolbot/status/freeze_protection",
+            "alerts": "coolbot/status/alerts"
+        },
+        "settings": {
+            "target_temp": "coolbot/settings/target_temp",
+            "hysteresis": "coolbot/settings/hysteresis",
+            "heating_diode_enabled": "coolbot/settings/heating_diode_enabled",
+            "enable_ir": "coolbot/settings/ir_enabled"
+        }
+    },
+    "message_formats": {
+        "temperature_sensor": {
+            "topic": "coolbot/sensors/{sensor_type}",
+            "payload": {
+                "temperature": "float",
+                "humidity": "float (optional)",
+                "timestamp": "unix_timestamp",
+                "sensor_id": "string"
+            }
+        },
+        "esp32_status": {
+            "topic": "coolbot/esp32/status",
+            "payload": {
+                "online": "boolean",
+                "uptime": "seconds",
+                "wifi_rssi": "dBm",
+                "free_heap": "bytes",
+                "sensors_online": "array of sensor_ids",
+                "heating_diode_temp": "float (diode temperature)"
+            }
+        },
+        "control_command": {
+            "topic": "coolbot/controls/{device}",
+            "payload": {
+                "command": "on|off",
+                "pwm_value": "0-255 (for heating diode intensity)",
+                "source": "nodered|manual|emergency",
+                "timestamp": "unix_timestamp"
+            }
+        },
+        "heating_diode_control": {
+            "topic": "coolbot/controls/heating_diode",
+            "payload": {
+                "enabled": "boolean",
+                "intensity": "0-255 (PWM value)",
+                "target_temp": "float (desired diode temperature)",
+                "mode": "on|off|auto"
+            }
+        },
+        "ir_command": {
+            "topic": "coolbot/controls/ir_send",
+            "payload": {
+                "command": "string (IR code or command name)",
+                "repeat": "number (default 1)",
+                "protocol": "string (optional)"
+            }
+        }
+    },
+    "esp32_configuration": {
+        "sensor_pins": {
+            "room_temp_pin": "GPIO4",
+            "coil_temp_pin": "GPIO5",
+            "status_led": "GPIO2"
+        },
+        "heating_diode": {
+            "pin": "GPIO25",
+            "pwm_channel": 0,
+            "pwm_frequency": 1000,
+            "max_temp": "120F",
+            "default_intensity": 200,
+            "feedback_pin": "GPIO26 (optional temp sensor on diode)"
+        },
+        "relay_pins": {
+            "ac_plug_relay": "GPIO12"
+        },
+        "ir_pins": {
+            "ir_send": "GPIO14",
+            "ir_receive": "GPIO15"
+        },
+        "update_intervals": {
+            "temperature_reading": "30s",
+            "heating_diode_check": "10s",
+            "status_heartbeat": "60s",
+            "wifi_check": "300s"
+        }
+    },
+    "heating_diode_specs": {
+        "type": "High-power resistor or heating element",
+        "voltage": "3.3V or 5V (depending on ESP32 supply)",
+        "current": "500mA-1A max",
+        "placement": "Near AC internal thermostat sensor",
+        "mounting": "Thermal adhesive or small heatsink",
+        "safety": "Include temperature feedback and current limiting"
+    }
+}
